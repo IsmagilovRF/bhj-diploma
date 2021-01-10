@@ -1,74 +1,42 @@
-/**
- * Класс Modal отвечает за
- * управление всплывающими окнами.
- * В первую очередь это открытие или
- * закрытие имеющихся окон
- * */
-
+'use strict';
 
 class Modal {
-  /**
-   * Устанавливает текущий элемент в свойство element
-   * Регистрирует обработчики событий с помощью
-   * AccountsWidget.registerEvents()
-   * Если переданный элемент не существует,
-   * необходимо выкинуть ошибку.
-   * */
+
   constructor( element ) {
-    if (!element) {
-      throw new Error('элемент не найден');
-    }
+    if ( !element ) { throw Error }
     this.element = element;
+    this.closeButtonsArray = Array.from(this.element.querySelectorAll('[data-dismiss="modal"]'))
     this.registerEvents();
-  }
+  };
 
-  /**
-   * При нажатии на элемент с data-dismiss="modal"
-   * должен закрыть текущее окно
-   * (с помощью метода Modal.onClose)
-   * */
   registerEvents() {
-    const buttonsClose = this.element.querySelectorAll('[data-dismiss="modal"]');
+    this.closeButtonsArray.forEach( element => {
+      element.addEventListener('click', event => {
+        this.close( event );
+      });
+    });
 
-    this.onClose = this.onClose.bind(this);
+  };
 
-    for (let elem of buttonsClose) {
-      elem.addEventListener("click", this.onClose);
-    }
-
-  }
-
-  /**
-   * Срабатывает после нажатия на элементы, закрывающие окно.
-   * Закрывает текущее окно (Modal.close())
-   * */
-  onClose( e ) {
-    e.preventDefault();
+  onClose() {
     this.close();
-  }
-  /**
-   * Удаляет обработчики событий
-   * */
-  unregisterEvents() {
-    const buttonsDelete = this.element.querySelectorAll('[data-dismiss="modal"]');
-    this.onClose = this.onClose.bind(this);
+  };
 
-    for (let elem of buttonsDelete) {
-      elem.removeEventListener("click", this.onClose);
-    }
-    
+  unregisterEvents() {
+    this.closeButtonsArray.forEach( element => {
+      element.removeEventListener('click', event => {
+        this.close( event );
+      });
+    });
   }
-  /**
-   * Открывает окно: устанавливает CSS-свойство display
-   * со значением «block»
-   * */
+
   open() {
     this.element.style.display = "block";
-  }
-  /**
-   * Закрывает окно: удаляет CSS-свойство display
-   * */
-  close(){
+  };
+
+  close() {
     this.element.style.display = "none";
-  }
+    this.unregisterEvents();
+  };
+
 }

@@ -1,56 +1,57 @@
-/**
- * Класс CreateTransactionForm управляет формой
- * создания новой транзакции
- * Наследуется от AsyncForm
- * */
+'use strict';
 
-class CreateTransactionForm extends AsyncForm{
-  /**
-   * Вызывает родительский конструктор и
-   * метод renderAccountsList
-   * */
+class CreateTransactionForm extends AsyncForm {
+
   constructor( element ) {
-    super(element);
-		this.renderAccountsList();
-  }
+    super( element );
+    this.element = element;
+    this.selects = this.element.querySelectorAll('select.accounts-select');
+    this.select = this.element.querySelector('select.accounts-select');
+    this.renderAccountsList();
+  };
 
-  /**
-   * Получает список счетов с помощью Account.list
-   * Обновляет в форме всплывающего окна выпадающий список
-   * */
   renderAccountsList() {
-    const accountsSelectList = this.element.querySelector(".accounts-select");
-
-		Account.list(User.current(), (err, response) => {
-			if (response.data) {
-				accountsSelectList.innerHTML = "";
-				response.data.forEach((item) => {
-					accountsSelectList.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-				})
-			} 
-    })
-    
+    // clear old options
+    Array.from(this.element.querySelectorAll('option')).forEach( element => {
+      element.remove();
+    });
+    // add new options
+    let currentUser = User.current();
+    if ( currentUser ) {
+      Entity.list( '/account', currentUser, response => {
+        if (response && response.success) {
+          Array.from( response.data ).forEach( element => {
+            let option = document.createElement('option');
+            option.value = element.id;
+            option.innerHTML = element.name;
+            Array.from(this.selects).forEach( element => {
+              element.appendChild( option );
+            });
+          });
+        }
+      });
+    }
   }
 
-  /**
-   * Создаёт новую транзакцию (доход или расход)
-   * с помощью Transaction.create. По успешному результату
-   * вызывает App.update(), сбрасывает форму и закрывает окно,
-   * в котором находится форма
-   * */
   onSubmit( options ) {
-    Transaction.create(options.data, (err, response) => {
-			if (response && (response.success === true)) {
-				this.element.reset(); //В случае успешного ответа сбрасывает форму
-				const type = options.data.type;
-				const modalName = 'new' + type[0].toUpperCase() + type.substr(1);
-				let transactionModal = App.getModal(modalName);
-				transactionModal.close(); //В случае успешного ответа закрывает всплывающее окно, в котором находится данная форм
-				App.update(); //В случае успешного ответа вызывает метод App.update для обновления информации о приложении
-			}
-    })
-    
+    let currentUser = User.current();
+    if ( currentUser ) {
+      let type = '';
+      let account_id = this.select.options[this.select.selectedIndex].value;
+      let data = Object.assign({ user_id: currentUser.id, account_id: account_id }, options );
+      data.type = (this.element.id === 'new-income-form' ? type = 'income' : type = 'expense');
+      Entity.create( '/transaction', data, response => {
+        if (response.success && response) {
+          if ( type.toUpperCase() == 'INCOME' ) {
+            App.getModal('newIncome').close();
+          } else {
+            App.getModal('newExpense').close();
+          }
+          super.resetFormData();
+          App.update();
+          this.renderAccountsList();
+        }
+      });
+    }
   }
-
 }
-  

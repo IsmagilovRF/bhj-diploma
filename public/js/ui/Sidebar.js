@@ -1,68 +1,55 @@
-/**
- * Класс Sidebar отвечает за работу боковой колонки:
- * кнопки скрытия/показа колонки в мобильной версии сайта
- * и за кнопки меню
- * */
-
+'use strict';
 
 class Sidebar {
-  /**
-   * Запускает initAuthLinks и initToggleButton
-   * */
+
   static init() {
     this.initAuthLinks();
     this.initToggleButton();
   }
 
-  /**
-   * Отвечает за скрытие/показа боковой колонки:
-   * переключает два класса для body: sidebar-open и sidebar-collapse
-   * при нажатии на кнопку .sidebar-toggle
-   * */
   static initToggleButton() {
-    const sidebarMini = document.getElementsByClassName('sidebar-mini')[0];
-    const sidebarMiniButton = document.getElementsByClassName('sidebar-toggle')[0];
+    document.getElementsByClassName('sidebar-toggle').item(0).onclick = function () {
+      const bodySideBar = document.getElementsByClassName('skin-blue sidebar-mini app').item(0);
+      bodySideBar.classList.toggle('sidebar-open');
+      bodySideBar.classList.toggle('sidebar-collapse');
+    };
+  };
 
-    sidebarMiniButton.addEventListener('click', function() {
-      sidebarMini.classList.toggle('sidebar-open');
-      sidebarMini.classList.toggle('sidebar-collapse');
-    })
-  }
-
-  /**
-   * При нажатии на кнопку входа, показывает окно входа
-   * (через найденное в App.getModal)
-   * При нажатии на кнопку регастрации показывает окно регистрации
-   * При нажатии на кнопку выхода вызывает User.logout и по успешному
-   * выходу устанавливает App.setState( 'init' )
-   * */
   static initAuthLinks() {
-    const itemLogin = document.querySelector(".menu-item_login");
-		const itemRegister = document.querySelector(".menu-item_register");
-    const itemLogout = document.querySelector(".menu-item_logout");
-    
-    //При нажатии на кнопку «Регистрация» необходимо открыть окно #modal-register (предварительно найдя его через App.getModal) с помощью метода Modal.open()
-    itemRegister.addEventListener("click", function (event) {
-			const registerModal = App.getModal("register");
-			registerModal.open();
-    });
-    
-    //При нажатии на кнопку «Войти» необходимо открыть окно #modal-login (предварительно найдя его через App.getModal) с помощью метода Modal.open()
-    itemLogin.addEventListener("click", function (event) {
-			const loginModal = App.getModal("login");
-			loginModal.open();
-    });
-    
-    //При нажатии на кнопку «Выйти» необходимо вызвать метод User.logout и после успешного выхода (response.success = true), нужно вызвать App.setState( 'init' )
-    itemLogout.addEventListener("click", function (event) {
-			User.logout({}, (err, response) => {
-				if (response && (response.success === true)) {
-					App.setState("init");
-					User.unsetCurrent();
-				}
-			})
-    });
-  }
-  
+    // register
+    const registerModal = App.getModal( 'register' );
+    const registerButton = document.getElementsByClassName('menu-item_register').item(0);
+    this.addOpenCloseButtonEvent( registerModal, registerButton );
+    registerModal.element.querySelector('button.btn-primary').onclick = function () {
+      App.getForm('register').submit();
+      // new RegisterForm(document.getElementById('register-form')).submit();
+    };
+    // login
+    const loginModal = App.getModal( 'login' );
+    const loginButton = document.getElementsByClassName('menu-item_login').item(0);
+    this.addOpenCloseButtonEvent( loginModal, loginButton );
+    loginModal.element.querySelector('button.btn-primary').onclick = function () {
+      App.getForm('login').submit();
+      // new LoginForm(document.getElementById('login-form')).submit();
+    };
+    // logout
+    const logoutButton = document.getElementsByClassName('menu-item_logout').item(0);
+    logoutButton.onclick = function () {
+      User.logout( {}, response => {
+        if ( response && response.success ) {
+          User.unsetCurrent();
+          App.setState( 'init' );
+        }
+      });
+    };
+  };
+
+  static addOpenCloseButtonEvent( modal, openButton ) {
+    openButton.onclick = function () {
+      modal.open();
+    };
+    modal.element.querySelector('button.close').onclick = function () { modal.close() };
+    modal.element.querySelector('button.pull-left').onclick = function () { modal.close(); };
+  };
 
 }
