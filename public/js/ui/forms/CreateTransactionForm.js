@@ -12,14 +12,19 @@ class CreateTransactionForm extends AsyncForm {
 
   renderAccountsList() {
     // clear old options
-    Array.from(this.element.querySelectorAll('option')).forEach( element => {
-      element.remove();
-    });
+    //Array.from(this.element.querySelectorAll('option')).forEach( element => {
+    //  element.remove();
+    //});
     // add new options
     let currentUser = User.current();
     if ( currentUser ) {
       Entity.list( '/account', currentUser, response => {
         if (response && response.success) {
+          // clear old options:
+          Array.from(this.element.querySelectorAll('option')).forEach( element => {
+             element.remove();
+          });
+          //
           Array.from( response.data ).forEach( element => {
             let option = document.createElement('option');
             option.value = element.id;
